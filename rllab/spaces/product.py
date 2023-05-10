@@ -1,4 +1,5 @@
 from rllab.spaces.base import Space
+# from akro import Space
 import numpy as np
 from rllab.misc import ext
 
@@ -13,7 +14,7 @@ class Product(Space):
         dtypes = [c.new_tensor_variable("tmp", extra_dims=0).dtype for c in components]
         if len(dtypes) > 0 and hasattr(dtypes[0], "as_numpy_dtype"):
             dtypes = [d.as_numpy_dtype for d in dtypes]
-        self._common_dtype = np.core.numerictypes.find_common_type([], dtypes)
+        self._common_dtype = np.find_common_type([], dtypes)
 
     def sample(self):
         return tuple(x.sample() for x in self._components)

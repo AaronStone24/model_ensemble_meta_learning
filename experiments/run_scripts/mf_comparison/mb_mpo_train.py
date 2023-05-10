@@ -1,14 +1,24 @@
+import os
+import sys  
+
+import garage
+sys.path.append(os.getcwd())
+
+import rllab
 from rllab.misc.instrument import VariantGenerator
 from rllab import config
-from rllab_maml.baselines.linear_feature_baseline import LinearFeatureBaseline
-from rllab_maml.baselines.gaussian_mlp_baseline import GaussianMLPBaseline
-from sandbox.ours.envs.normalized_env import normalize
+# from rllab_maml.baselines.linear_feature_baseline import LinearFeatureBaseline
+from garage.np.baselines import LinearFeatureBaseline
+from garage.tf.baselines import GaussianMLPBaseline
+# from rllab_maml.baselines.gaussian_mlp_baseline import GaussianMLPBaseline
+# from sandbox.ours.envs.normalized_env import normalize
+from garage.envs.normalized_env import normalize
 from sandbox.ours.envs.base import TfEnv
 from rllab.misc.instrument import stub, run_experiment_lite
 from sandbox.ours.policies.maml_improved_gauss_mlp_policy import MAMLImprovedGaussianMLPPolicy
 from sandbox.ours.dynamics.dynamics_ensemble import MLPDynamicsEnsemble
 from sandbox.ours.algos.ModelMAML.model_maml_trpo import ModelMAMLTRPO
-from experiments.helpers.ec2_helpers import cheapest_subnets
+# from experiments.helpers.ec2_helpers import cheapest_subnets
 from experiments.helpers.run_multi_gpu import run_multi_gpu
 
 from sandbox.ours.envs.own_envs import PointEnvMAML
@@ -104,8 +114,9 @@ def run_experiment(argv):
     vg.add('seed', [22, 33, 12])
 
     # env spec
-    vg.add('env', ['HalfCheetahEnvRandParams', 'AntEnvRandParams', 'WalkerEnvRandomParams',
-                   'SwimmerEnvRandParams', 'HopperEnvRandParams', 'PR2EnvRandParams'])
+    # vg.add('env', ['HalfCheetahEnvRandParams', 'AntEnvRandParams', 'WalkerEnvRandomParams',
+                #    'SwimmerEnvRandParams', 'HopperEnvRandParams', 'PR2EnvRandParams'])
+    vg.add('env', ['HalfCheetahEnvRandParams',])
     vg.add('log_scale_limit', [0.0])
     vg.add('path_length_env', [200])
 
@@ -169,22 +180,24 @@ def run_experiment(argv):
         run_multi_gpu(script_path, default_dict, n_gpu=n_gpu, ctx_per_gpu=args.ctx)
 
     else:
-        # ----------------------- AWS conficuration ---------------------------------
-        if args.mode == 'ec2':
-            info = config.INSTANCE_TYPE_INFO[ec2_instance]
-            n_parallel = int(info["vCPU"])
-        else:
-            n_parallel = 12
+        n_parallel = 12
+    # else:
+    #     # ----------------------- AWS conficuration ---------------------------------
+    #     if args.mode == 'ec2':
+    #         info = config.INSTANCE_TYPE_INFO[ec2_instance]
+    #         n_parallel = int(info["vCPU"])
+    #     else:
+    #         n_parallel = 12
 
-        if args.mode == 'ec2':
+    #     if args.mode == 'ec2':
 
 
-            config.AWS_INSTANCE_TYPE = ec2_instance
-            config.AWS_SPOT_PRICE = str(info["price"])
-            subnets = cheapest_subnets(ec2_instance, num_subnets=NUM_EC2_SUBNETS)
-            print("\n" + "**********" * 10 + "\nexp_prefix: {}\nvariants: {}".format('TRPO', len(variants)))
-            print('Running on type {}, with price {}, on the subnets: '.format(config.AWS_INSTANCE_TYPE,
-                                                                               config.AWS_SPOT_PRICE, ), str(subnets))
+    #         config.AWS_INSTANCE_TYPE = ec2_instance
+    #         config.AWS_SPOT_PRICE = str(info["price"])
+    #         subnets = cheapest_subnets(ec2_instance, num_subnets=NUM_EC2_SUBNETS)
+    #         print("\n" + "**********" * 10 + "\nexp_prefix: {}\nvariants: {}".format('TRPO', len(variants)))
+    #         print('Running on type {}, with price {}, on the subnets: '.format(config.AWS_INSTANCE_TYPE,
+    #                                                                            config.AWS_SPOT_PRICE, ), str(subnets))
 
         # ----------------------- TRAINING ---------------------------------------
         exp_ids = random.sample(range(1, 1000), len(variants))
@@ -193,16 +206,16 @@ def run_experiment(argv):
                                                            v['batch_size_env_samples'], v['seed'], exp_id)
             v = instantiate_class_stings(v)
 
-            if args.mode == 'ec2':
-                subnet = random.choice(subnets)
-                config.AWS_REGION_NAME = subnet[:-1]
-                config.AWS_KEY_NAME = config.ALL_REGION_AWS_KEY_NAMES[
-                    config.AWS_REGION_NAME]
-                config.AWS_IMAGE_ID = config.ALL_REGION_AWS_IMAGE_IDS[
-                    config.AWS_REGION_NAME]
-                config.AWS_SECURITY_GROUP_IDS = \
-                    config.ALL_REGION_AWS_SECURITY_GROUP_IDS[
-                        config.AWS_REGION_NAME]
+            # if args.mode == 'ec2':
+            #     subnet = random.choice(subnets)
+            #     config.AWS_REGION_NAME = subnet[:-1]
+            #     config.AWS_KEY_NAME = config.ALL_REGION_AWS_KEY_NAMES[
+            #         config.AWS_REGION_NAME]
+            #     config.AWS_IMAGE_ID = config.ALL_REGION_AWS_IMAGE_IDS[
+            #         config.AWS_REGION_NAME]
+            #     config.AWS_SECURITY_GROUP_IDS = \
+            #         config.ALL_REGION_AWS_SECURITY_GROUP_IDS[
+            #             config.AWS_REGION_NAME]
 
 
             run_experiment_lite(
@@ -234,11 +247,11 @@ def instantiate_class_stings(v):
 
     # optimizer
     if v['optimizer_model'] == 'sgd':
-        v['optimizer_model'] = tf.train.GradientDescentOptimizer
+        v['optimizer_model'] = tf.keras.optimizers.SGD
     elif v['optimizer_model'] == 'adam':
-        v['optimizer_model'] = tf.train.AdamOptimizer
+        v['optimizer_model'] = tf.keras.optimizers.Adam
     elif v['optimizer_model'] == 'momentum':
-        v['optimizer_model'] = tf.train.MomentumOptimizer
+        v['optimizer_model'] = tf.keras.optimizers.RMSprop
 
     # nonlinearlity
     for nonlinearity_key in ['hidden_nonlinearity_policy', 'hidden_nonlinearity_model']:

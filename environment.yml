@@ -1,17 +1,18 @@
 name: rllab3
 channels:
     - https://conda.anaconda.org/kne 
-    - https://conda.binstar.org/tlatorre 
+    - https://conda.anaconda.org/tlatorre 
     - https://conda.anaconda.org/cjs14
     - https://conda.anaconda.org/menpo
     - jjhelmus
+    - conda-forge
 dependencies:
     - python==3.5.2
     - numpy
     - scipy
     - path.py
     - python-dateutil
-    - joblib==0.9.4
+    - joblib
     - mako
     - ipywidgets
     - numba
@@ -37,9 +38,12 @@ dependencies:
         - cached_property
         - line_profiler
         - Cython
-        - git+https://github.com/Theano/Theano.git@adfe319ce6b781083d8dc3200fb4481b00853791#egg=Theano
-        - git+https://github.com/neocxi/Lasagne.git@484866cf8b38d878e92d521be445968531646bb8#egg=Lasagne
-        - git+https://github.com/plotly/plotly.py.git@2594076e29584ede2d09f2aa40a8a195b3f3fc66#egg=plotly
+        - Theano
+        - Lasagne
+        - plotly
+        #- git+https://github.com/Theano/Theano.git@adfe319ce6b781083d8dc3200fb4481b00853791#egg=Theano
+        #- git+https://github.com/neocxi/Lasagne.git@484866cf8b38d878e92d521be445968531646bb8#egg=Lasagne
+        #- git+https://github.com/plotly/plotly.py.git@2594076e29584ede2d09f2aa40a8a195b3f3fc66#egg=plotly
         - awscli
         - git+https://github.com/openai/gym.git
         - pyglet

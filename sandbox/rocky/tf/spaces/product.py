@@ -1,4 +1,5 @@
 from rllab.spaces.base import Space
+# from akro import Space
 import tensorflow as tf
 import numpy as np
 
@@ -12,7 +13,7 @@ class Product(Space):
         dtypes = [c.dtype for c in components]
         if len(dtypes) > 0 and hasattr(dtypes[0], "as_numpy_dtype"):
             dtypes = [d.as_numpy_dtype for d in dtypes]
-        self._common_dtype = np.core.numerictypes.find_common_type([], dtypes)
+        self._common_dtype = np.find_common_type([], dtypes)
 
     def sample(self):
         return tuple(x.sample() for x in self._components)
@@ -25,7 +26,7 @@ class Product(Space):
         return isinstance(x, tuple) and all(c.contains(xi) for c, xi in zip(self._components, x))
 
     def new_tensor_variable(self, name, extra_dims):
-        return tf.placeholder(
+        return tf.compat.v1.placeholder(
             dtype=self._common_dtype,
             shape=[None] * extra_dims + [self.flat_dim],
             name=name,

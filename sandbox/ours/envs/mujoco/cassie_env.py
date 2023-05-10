@@ -1,4 +1,5 @@
-from vendor.cassie_mujoco_sim.test.cassiemujoco import CassieSim, CassieVis, pd_in_t, state_out_t
+from vendor.cassie_mujoco_sim.example.cassiemujoco import CassieSim, CassieVis, state_out_t
+from vendor.cassie_mujoco_sim.example.cassiemujoco_ctypes import pd_in_t
 import numpy as np
 import time
 from rllab.spaces import Box

@@ -1,0 +1,19 @@
+Collecting glfw
+  Downloading glfw-2.5.9-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-manylinux2014_x86_64.whl (207 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 207.8/207.8 kB 394.2 kB/s eta 0:00:00
+Collecting Cython
+  Downloading Cython-0.29.34-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl (2.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 405.2 kB/s eta 0:00:00
+Requirement already satisfied: imageio in /home/kartik/miniconda3/envs/meml/lib/python3.8/site-packages (2.28.1)
+Collecting cffi
+  Downloading cffi-1.15.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (442 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 442.7/442.7 kB 392.9 kB/s eta 0:00:00
+Collecting fasteners~=0.15
+  Downloading fasteners-0.18-py3-none-any.whl (18 kB)
+Requirement already satisfied: pillow>=8.3.2 in /home/kartik/miniconda3/envs/meml/lib/python3.8/site-packages (from imageio) (9.5.0)
+Requirement already satisfied: numpy in /home/kartik/miniconda3/envs/meml/lib/python3.8/site-packages (from imageio) (1.23.5)
+Collecting pycparser
+  Downloading pycparser-2.21-py2.py3-none-any.whl (118 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 118.7/118.7 kB 645.1 kB/s eta 0:00:00
+Installing collected packages: glfw, pycparser, fasteners, Cython, cffi
+Successfully installed Cython-0.29.34 cffi-1.15.1 fasteners-0.18 glfw-2.5.9 pycparser-2.21

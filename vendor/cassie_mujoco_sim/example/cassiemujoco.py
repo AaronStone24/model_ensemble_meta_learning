@@ -17,10 +17,11 @@ import os
 import ctypes
 
 # Get base directory
-_dir_path = os.path.dirname(os.path.realpath(__file__))
+# _dir_path = os.path.dirname(os.path.realpath(__file__))
+_dir_path = os.path.join(os.getcwd(), *['vendor', 'cassie_mujoco_sim'])
 
 # Initialize libcassiesim
-cassie_mujoco_init(str.encode(_dir_path))
+libcassiesim.cassie_mujoco_init(str.encode(_dir_path))
 
 # Interface classes
 class CassieSim:

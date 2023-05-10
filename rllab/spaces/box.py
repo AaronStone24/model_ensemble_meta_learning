@@ -2,7 +2,8 @@ from rllab.core.serializable import Serializable
 from .base import Space
 import numpy as np
 from rllab.misc import ext
-import theano
+# import theano
+import tensorflow as tf
 
 
 class Box(Space):
@@ -79,6 +80,6 @@ class Box(Space):
         return ext.new_tensor(
             name=name,
             ndim=extra_dims+1,
-            dtype=theano.config.floatX
+            dtype=tf.float32,
         )
 

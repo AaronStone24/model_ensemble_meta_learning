@@ -10,7 +10,7 @@ import sys
 import click
 import subprocess
 
-import boto3
+# import boto3
 from rllab import config
 from rllab.misc.instrument import query_yes_no
 import numpy as np
@@ -52,7 +52,7 @@ REGIONS = [
     "us-west-2",
 ]
 
-
+'''
 def get_clients():
     regions = REGIONS
     clients = []
@@ -95,6 +95,7 @@ def _collect_instances(region):
     for instance in instances:
         instance['Region'] = region
     return instances
+'''
 
 
 def get_all_instances():

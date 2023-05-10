@@ -8,7 +8,7 @@ from sandbox.rocky.tf.misc import tensor_utils
 from rllab.misc import logger
 from collections import OrderedDict
 import sandbox.rocky.tf.core.layers as L
-import joblib
+# import joblib
 
 
 
@@ -18,19 +18,19 @@ class MLPDynamicsModel(LayersPowered, Serializable):
     """
 
     def __init__(self,
-                 name,
-                 env_spec,
-                 hidden_sizes=(500, 500),
-                 hidden_nonlinearity=tf.nn.relu,
-                 output_nonlinearity=None,
-                 batch_size=500,
-                 step_size=0.001,
-                 weight_normalization=True,
-                 normalize_input=True,
-                 optimizer=tf.train.AdamOptimizer,
-                 valid_split_ratio=0.2,
-                 rolling_average_persitency=0.99
-                 ):
+            name,
+            env_spec,
+            hidden_sizes=(500, 500),
+            hidden_nonlinearity=tf.nn.relu,
+            output_nonlinearity=None,
+            batch_size=500,
+            step_size=0.001,
+            weight_normalization=True,
+            normalize_input=True,
+            optimizer=tf.keras.optimizers.Adam,
+            valid_split_ratio=0.2,
+            rolling_average_persitency=0.99
+        ):
 
         Serializable.quick_init(self, locals())
 

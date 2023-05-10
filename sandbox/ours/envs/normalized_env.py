@@ -1,5 +1,6 @@
 import numpy as np
 
+# from garage import spaces
 from rllab import spaces
 from rllab.core.serializable import Serializable
 from sandbox.ours.envs.proxy_env import ProxyEnv

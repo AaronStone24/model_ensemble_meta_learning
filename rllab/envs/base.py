@@ -1,4 +1,4 @@
-from .env_spec import EnvSpec
+from garage._environment import EnvSpec
 import collections
 from cached_property import cached_property
 
@@ -65,7 +65,7 @@ class Env(object):
         return EnvSpec(
             observation_space=self.observation_space,
             action_space=self.action_space,
-            id=self.__class__.__name__
+            # id=self.__class__.__name__
         )
 
     @property

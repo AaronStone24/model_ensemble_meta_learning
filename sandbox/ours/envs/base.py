@@ -1,8 +1,12 @@
-from sandbox.ours.envs.proxy_env import ProxyEnv
-from rllab.envs.base import EnvSpec
-from rllab.spaces.box import Box as TheanoBox
-from rllab.spaces.discrete import Discrete as TheanoDiscrete
-from rllab.spaces.product import Product as TheanoProduct
+# from sandbox.ours.envs.proxy_env import ProxyEnv
+# from rllab.envs.base import EnvSpec
+from garage import Wrapper
+from garage import EnvSpec
+from akro import Box as AkroBox
+from akro import Discrete as AkroDiscrete
+# from rllab.spaces.box import Box as TheanoBox
+# from rllab.spaces.discrete import Discrete as TheanoDiscrete
+from rllab.spaces.product import Product as AkroProduct
 from sandbox.rocky.tf.spaces.discrete import Discrete
 from sandbox.rocky.tf.spaces.box import Box
 from sandbox.rocky.tf.spaces.product import Product
@@ -10,11 +14,11 @@ from cached_property import cached_property
 
 
 def to_tf_space(space):
-    if isinstance(space, TheanoBox):
+    if isinstance(space, AkroBox):
         return Box(low=space.low, high=space.high)
-    elif isinstance(space, TheanoDiscrete):
+    elif isinstance(space, AkroDiscrete):
         return Discrete(space.n)
-    elif isinstance(space, TheanoProduct):
+    elif isinstance(space, AkroProduct):
         return Product(list(map(to_tf_space, space.components)))
     else:
         raise NotImplementedError
@@ -30,10 +34,10 @@ class WrappedCls(object):
         return self.cls(self.env_cls(*args, **dict(self.extra_kwargs, **kwargs)))
 
 
-class TfEnv(ProxyEnv):
+class TfEnv(Wrapper):
     @cached_property
     def observation_space(self):
-        return to_tf_space(self.wrapped_env.observation_space)
+        return to_tf_space(self.observation_space)
 
     @cached_property
     def action_space(self):

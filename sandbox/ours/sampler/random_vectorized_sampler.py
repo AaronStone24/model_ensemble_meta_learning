@@ -46,11 +46,12 @@ class RandomVectorizedSampler(RandomBaseSampler, VectorizedSampler):
         n_samples_collected = 0
         obses = self.vec_env.reset()
         dones = np.asarray([True] * self.vec_env.num_envs)
-        running_paths = [None] * self.vec_env.num_envs
+        running_paths = [{} for _ in range(self.vec_env.num_envs)]
 
         pbar = ProgBarCounter(num_samples)
         env_time = 0
         process_time = 0
+        policy_time = 0
 
         policy = self.algo.policy
         import time
@@ -98,7 +99,7 @@ class RandomVectorizedSampler(RandomBaseSampler, VectorizedSampler):
                         agent_infos=tensor_utils.stack_tensor_dict_list(running_paths[idx]["agent_infos"]),
                     ))
                     n_samples_collected += len(running_paths[idx]["rewards"])
-                    running_paths[idx] = None
+                    running_paths[idx] = {}
             process_time += time.time() - t
             pbar.inc(len(obses))
             obses = next_obses

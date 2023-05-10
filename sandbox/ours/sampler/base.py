@@ -2,8 +2,8 @@ import numpy as np
 from rllab.misc import special
 from rllab.misc import tensor_utils
 from rllab.algos import util
-from rllab.sampler.base import Sampler
-from rllab.sampler.base import BaseSampler
+# from rllab.sampler.base import Sampler
+# from rllab.sampler.base import BaseSampler
 import rllab.misc.logger as logger
 
 class Sampler(object):

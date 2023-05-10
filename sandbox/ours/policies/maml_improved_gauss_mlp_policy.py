@@ -8,8 +8,7 @@ from sandbox.rocky.tf.spaces.box import Box
 
 from rllab_maml.core.serializable import Serializable
 from sandbox_maml.rocky.tf.policies.base import StochasticPolicy
-from sandbox_maml.rocky.tf.distributions.diagonal_gaussian import \
-    DiagonalGaussian  # This is just a util class. No params.
+from sandbox_maml.rocky.tf.distributions.diagonal_gaussian import DiagonalGaussian  # This is just a util class. No params.
 from rllab_maml.misc.overrides import overrides
 from rllab.misc import logger
 from rllab_maml.misc.tensor_utils import flatten_tensors, unflatten_tensors

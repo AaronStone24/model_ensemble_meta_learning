@@ -14,7 +14,7 @@ import itertools
 
 class MAMLVectorizedSampler(MAMLBaseSampler):
 
-    def __init__(self, algo, n_tasks, n_envs=None, parallel=True):
+    def __init__(self, algo, n_tasks, n_envs=0, parallel=True):
         super(MAMLVectorizedSampler, self).__init__(algo)
         self.n_envs = n_envs
         self.n_tasks = n_tasks
@@ -40,7 +40,8 @@ class MAMLVectorizedSampler(MAMLBaseSampler):
             )
 
     def shutdown_worker(self):
-        self.vec_env.terminate()
+        if self.vec_env is not None:
+            self.vec_env.terminate()
 
     def obtain_samples(self, itr, reset_args=None, return_dict=False, log_prefix=''):
         # reset_args: arguments to pass to the environments to reset
@@ -53,6 +54,7 @@ class MAMLVectorizedSampler(MAMLBaseSampler):
         for i in range(self.n_tasks):
             paths[i] = []
 
+        assert self.vec_env is not None
         assert self.vec_env.num_envs % self.n_tasks == 0
 
         n_envs_per_task = self.vec_env.num_envs // self.n_tasks
@@ -71,7 +73,7 @@ class MAMLVectorizedSampler(MAMLBaseSampler):
         n_samples = 0
         obses = self.vec_env.reset(reset_args)
         dones = np.asarray([True] * self.vec_env.num_envs)
-        running_paths = [None] * self.vec_env.num_envs
+        running_paths = [{} for _ in range(self.vec_env.num_envs)]
 
         pbar = ProgBarCounter(self.algo.batch_size)
         policy_time = 0
@@ -126,7 +128,7 @@ class MAMLVectorizedSampler(MAMLBaseSampler):
                         agent_infos=tensor_utils.stack_tensor_dict_list(running_paths[idx]["agent_infos"]),
                     ))
                     n_samples += len(running_paths[idx]["rewards"])
-                    running_paths[idx] = None
+                    running_paths[idx] = {}
             process_time += time.time() - t
             pbar.inc(len(obses))
             obses = next_obses

@@ -412,7 +412,7 @@ class FastDenseLayer(DenseLayer):
         self.updated_W = None
         self.updated_b = None
 
-    def set_updated_weights(W_update, b_update):
+    def set_updated_weights(self, W_update, b_update):
         self.updated_W = self.W + W_update
         self.updated_b = self.b + b_update
 
@@ -500,7 +500,7 @@ class BaseConvLayer(Layer):
         elif self.pad == 'VALID':
             pad = (0,) * self.n
         else:
-            import ipdb;
+            import ipdb
             ipdb.set_trace()
             raise NotImplementedError
 

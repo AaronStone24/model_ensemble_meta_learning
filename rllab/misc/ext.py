@@ -7,6 +7,9 @@ from collections import OrderedDict
 import numpy as np
 import operator
 from functools import reduce
+import tensorflow as tf
+from tensorflow import keras
+from typing import List, Tuple, Dict, Any, Union, Optional, Callable
 
 sys.setrecursionlimit(50000)
 
@@ -41,12 +44,15 @@ def compact(x):
 
 
 def cached_function(inputs, outputs):
-    import theano
+    # import theano
     with Message("Hashing theano fn"):
         if hasattr(outputs, '__len__'):
-            hash_content = tuple(map(theano.pp, outputs))
+            # hash_content = tuple(map(theano.pp, outputs))
+            hash_content = tuple(map(str, outputs))
         else:
-            hash_content = theano.pp(outputs)
+            # hash_content = theano.pp(outputs)
+            hash_content = str(outputs)
+
     cache_key = hex(hash(hash_content) & (2 ** 64 - 1))[:-1]
     cache_dir = Path('~/.hierctrl_cache')
     cache_dir = cache_dir.expanduser()
@@ -140,8 +146,10 @@ def compile_function(inputs=None, outputs=None, updates=None, givens=None, log_n
 
 
 def new_tensor(name, ndim, dtype):
-    import theano.tensor as TT
-    return TT.TensorType(dtype, (False,) * ndim)(name)
+    # import theano.tensor as TT
+    import tensorflow as tf
+    # return TT.TensorType(dtype, (False,) * ndim)(name)
+    return tf.TensorSpec(shape=(None,) * ndim, dtype=dtype, name=name)
 
 
 def new_tensor_like(name, arr_like):
@@ -189,13 +197,12 @@ def set_seed(seed):
     seed %= 4294967294
     global seed_
     seed_ = seed
-    import lasagne
-    random.seed(seed)
-    np.random.seed(seed)
-    lasagne.random.set_rng(np.random.RandomState(seed))
+    # import lasagne
+    # random.seed(seed)
+    # np.random.seed(seed)
+    # lasagne.random.set_rng(np.random.RandomState(seed))
     try:
-        import tensorflow as tf
-        tf.set_random_seed(seed)
+        tf.keras.utils.set_random_seed(seed)
     except Exception as e:
         print(e)
     print((
@@ -210,8 +217,8 @@ def get_seed():
     return seed_
 
 
-def flatten_hessian(cost, wrt, consider_constant=None,
-                    disconnected_inputs='raise', block_diagonal=True):
+def flatten_hessian(cost: tf.Variable, wrt: Union[tf.Variable, List[tf.Variable], Tuple[tf.Variable, ...]], 
+                    consider_constant=None, disconnected_inputs: str = 'raise', block_diagonal=True):
     """
     :type cost: Scalar (0-dimensional) Variable.
     :type wrt: Vector (1-dimensional tensor) 'Variable' or list of
@@ -235,13 +242,9 @@ def flatten_hessian(cost, wrt, consider_constant=None,
             variable is returned. The return value is of same type
             as `wrt`: a list/tuple or TensorVariable in all cases.
     """
-    import theano
-    from theano.tensor import arange
+
     # Check inputs have the right format
-    import theano.tensor as TT
-    from theano import Variable
-    from theano import grad
-    assert isinstance(cost, Variable), \
+    assert isinstance(cost, tf.Variable), \
         "tensor.hessian expects a Variable as `cost`"
     assert cost.ndim == 0, \
         "tensor.hessian expects a 0 dimensional variable as `cost`"
@@ -256,47 +259,37 @@ def flatten_hessian(cost, wrt, consider_constant=None,
 
     hessians = []
     if not block_diagonal:
-        expr = TT.concatenate([
-                                  grad(cost, input, consider_constant=consider_constant,
-                                       disconnected_inputs=disconnected_inputs).flatten()
-                                  for input in wrt
-                                  ])
+        expr = tf.concat([
+            tf.gradients(cost, input, stop_gradients=consider_constant,
+                         unconnected_gradients='zero')[0].flatten()
+            for input in wrt
+        ], axis=0)
 
     for input in wrt:
-        assert isinstance(input, Variable), \
+        assert isinstance(input, tf.Variable), \
             "tensor.hessian expects a (list of) Variable as `wrt`"
-        # assert input.ndim == 1, \
-        #     "tensor.hessian expects a (list of) 1 dimensional variable " \
-        #     "as `wrt`"
         if block_diagonal:
-            expr = grad(cost, input, consider_constant=consider_constant,
-                        disconnected_inputs=disconnected_inputs).flatten()
+            expr = tf.gradients(cost, input, stop_gradients=consider_constant,
+                                unconnected_gradients='zero')[0].flatten()
 
         # It is possible that the inputs are disconnected from expr,
         # even if they are connected to cost.
         # This should not be an error.
-        hess, updates = theano.scan(lambda i, y, x: grad(
-            y[i],
-            x,
-            consider_constant=consider_constant,
-            disconnected_inputs='ignore').flatten(),
-                                    sequences=arange(expr.shape[0]),
-                                    non_sequences=[expr, input])
-        assert not updates, \
-            ("Scan has returned a list of updates. This should not "
-             "happen! Report this to theano-users (also include the "
-             "script that generated the error)")
+        hess, = tf.map_fn(lambda x: tf.gradients(
+            expr[x],
+            input, stop_gradients=consider_constant,
+            unconnected_gradients='ignore')[0].flatten(),
+                          tf.range(expr.shape[0]), dtype=tf.float32)
         hessians.append(hess)
     if block_diagonal:
-        from theano.gradient import format_as
-        return format_as(using_list, using_tuple, hessians)
+        return hessians
     else:
-        return TT.concatenate(hessians, axis=1)
-
+        return tf.concat(hessians, axis=1)
 
 def flatten_tensor_variables(ts):
-    import theano.tensor as TT
-    return TT.concatenate(list(map(TT.flatten, ts)))
+    # import theano.tensor as TT
+    # return TT.concatenate(list(map(TT.flatten, ts)))
+    return tf.concat(list(map(tf.reshape, ts)), axis=0)
 
 
 def flatten_shape_dim(shape):
@@ -318,15 +311,18 @@ def print_lasagne_layer(layer, prefix=""):
 
 
 def unflatten_tensor_variables(flatarr, shapes, symb_arrs):
-    import theano.tensor as TT
-    import numpy as np
+    # import theano.tensor as TT
+    # import numpy as np
     arrs = []
     n = 0
     for (shape, symb_arr) in zip(shapes, symb_arrs):
         size = np.prod(list(shape))
-        arr = flatarr[n:n + size].reshape(shape)
-        if arr.type.broadcastable != symb_arr.type.broadcastable:
-            arr = TT.patternbroadcast(arr, symb_arr.type.broadcastable)
+        # arr = flatarr[n:n + size].reshape(shape)
+        arr = tf.reshape(flatarr[n:n + size], shape)
+        # if arr.type.broadcastable != symb_arr.type.broadcastable:
+            # arr = TT.patternbroadcast(arr, symb_arr.type.broadcastable)
+        if arr.shape.as_list() != symb_arr.shape.as_list():
+            arr = tf.broadcast_to(arr, symb_arr.shape)
         arrs.append(arr)
         n += size
     return arrs

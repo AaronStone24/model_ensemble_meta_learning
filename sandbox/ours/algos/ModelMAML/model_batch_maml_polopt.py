@@ -143,7 +143,7 @@ class ModelBatchMAMLPolopt(RLAlgorithm):
         if sampler_cls is None:
             sampler_cls = MAMLVectorizedSampler
             sampler_args = dict(n_tasks=self.meta_batch_size, n_envs=self.meta_batch_size * batch_size_env_samples, parallel=False)
-        self.env_sampler = sampler_cls(self, **sampler_args)
+        self.env_sampler = sampler_cls(self, sampler_args)
 
         # model sampler - makes (imaginary) rollouts with the estimated dynamics model ensemble
         self.model_sampler = MAMLModelVectorizedSampler(self, max_path_length=max_path_length_dyn, clip_obs=clip_obs)
@@ -159,6 +159,7 @@ class ModelBatchMAMLPolopt(RLAlgorithm):
         self.model_sampler.start_worker()
 
         if self.initial_random_samples:
+            assert self.random_sampler is not None
             self.random_sampler.start_worker()
 
     def shutdown_worker(self):
@@ -190,10 +191,10 @@ class ModelBatchMAMLPolopt(RLAlgorithm):
         # TODO - make this a util
         flatten_list = lambda l: [item for sublist in l for item in sublist]
 
-        config = tf.ConfigProto()
+        config = tf.compat.v1.ConfigProto()
         config.gpu_options.per_process_gpu_memory_fraction = self.frac_gpu
 
-        with tf.Session(config=config) as sess:
+        with tf.compat.v1.Session(config=config) as sess:
             # Code for loading a previous policy. Somewhat hacky because needs to be in sess.
             if self.load_policy is not None:
                 import joblib
@@ -206,6 +207,7 @@ class ModelBatchMAMLPolopt(RLAlgorithm):
             self.start_worker()
             start_time = time.time()
             n_env_timesteps = 0
+            samples_data_dynamics = {}
 
             for itr in range(self.start_itr, self.n_itr):
                 itr_start_time = time.time()
@@ -217,6 +219,7 @@ class ModelBatchMAMLPolopt(RLAlgorithm):
                     env = self.env
                     while not ('sample_env_params' in dir(env) or 'sample_goals' in dir(env)):
                         env = env._wrapped_env
+                    learner_env_params = None
                     if 'sample_goals' in dir(env):
                         learner_env_params = env.sample_goals(self.meta_batch_size)
                     elif 'sample_env_params':
@@ -234,6 +237,7 @@ class ModelBatchMAMLPolopt(RLAlgorithm):
                         logger.record_tabular("n_timesteps", n_env_timesteps)
 
                         self.all_paths.extend(new_env_paths)
+                        assert self.random_sampler is not None
                         samples_data_dynamics = self.random_sampler.process_samples(itr, self.all_paths,
                                                                                     log=True,
                                                                                     log_prefix='EnvTrajs-')  # must log in the same way as the model sampler below
@@ -310,6 +314,7 @@ class ModelBatchMAMLPolopt(RLAlgorithm):
                         self.policy.switch_to_init_dist()  # Switch to pre-update policy
 
                         all_samples_data_maml_iter, all_paths_maml_iter = [], []
+                        mean_reward, rolling_reward_mean = 0.0, 0.0
                         for step in range(self.num_grad_updates + 1):
 
                             ''' --------------- Sampling from Dynamics Models --------------- '''
@@ -344,7 +349,7 @@ class ModelBatchMAMLPolopt(RLAlgorithm):
                             # for logging purposes
                             _, mean_reward = self.process_samples_for_policy(itr,
                                                                              flatten_list(new_model_paths.values()),
-                                                                             log='reward',
+                                                                             log=True,
                                                                              log_prefix="DynTrajs%i%s-" % (
                                                                                  maml_itr + 1, chr(97 + step)),
                                                                              return_reward=True)
@@ -366,11 +371,11 @@ class ModelBatchMAMLPolopt(RLAlgorithm):
                             rolling_reward_mean = mean_reward
                         else:
                             prev_rolling_reward_mean = rolling_reward_mean
-                            rolling_reward_mean = 0.8 * rolling_reward_mean + 0.2 * mean_reward
+                            rolling_reward_mean = 0.8 * rolling_reward_mean + 0.2 * float(mean_reward)
 
 
                         # stop gradient steps when mean_reward decreases
-                        if self.retrain_model_when_reward_decreases and rolling_reward_mean < prev_rolling_reward_mean:
+                        if self.retrain_model_when_reward_decreases and float(rolling_reward_mean) < float(prev_rolling_reward_mean):
                             logger.log(
                                 "Stopping policy gradients steps since rolling mean reward decreased from %.2f to %.2f" % (
                                     prev_rolling_reward_mean, rolling_reward_mean))
@@ -440,7 +445,7 @@ class ModelBatchMAMLPolopt(RLAlgorithm):
 
     def initialize_uninitialized_variables(self, sess):
         uninit_vars = []
-        for var in tf.global_variables():
+        for var in tf.compat.v1.global_variables():
             # note - this is hacky, may be better way to do this in newer TF.
             try:
                 sess.run(var)

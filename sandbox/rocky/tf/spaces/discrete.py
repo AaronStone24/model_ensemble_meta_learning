@@ -1,11 +1,13 @@
-from rllab.spaces.base import Space
+# from rllab.spaces.base import Space
+from akro import Space
+from akro import Discrete as AkroDiscrete
 import numpy as np
 from rllab.misc import special
 from rllab.misc import ext
 import tensorflow as tf
 
 
-class Discrete(Space):
+class Discrete(AkroDiscrete):
     """
     {0,1,...,n-1}
     """
@@ -30,8 +32,8 @@ class Discrete(Space):
     def __repr__(self):
         return "Discrete(%d)" % self.n
 
-    def __eq__(self, other):
-        return self.n == other.n
+    # def __eq__(self, other):
+    #     return self.n == other.n
 
     def flatten(self, x):
         return special.to_onehot(x, self.n)
@@ -58,7 +60,7 @@ class Discrete(Space):
 
     def new_tensor_variable(self, name, extra_dims):
         # needed for safe conversion to float32
-        return tf.placeholder(dtype=tf.uint8, shape=[None] * extra_dims + [self.flat_dim], name=name)
+        return tf.compat.v1.placeholder(dtype=tf.uint8, shape=[None] * extra_dims + [self.flat_dim], name=name)
 
     @property
     def dtype(self):

@@ -8,7 +8,7 @@ from rllab.misc.overrides import overrides
 from rllab.mujoco_py import MjModel, MjViewer
 from rllab.misc import autoargs
 from rllab.misc import logger
-import theano
+# import theano
 import tempfile
 import os
 import mako.template
